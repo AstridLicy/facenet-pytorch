@@ -79,29 +79,29 @@ def detect_face(imgs, minsize, pnet, rnet, onet, threshold, factor, device):
         pick = batched_nms(boxes_scale[:, :4], boxes_scale[:, 4], image_inds_scale, 0.5)
         scale_picks.append(pick + offset)
         offset += boxes_scale.shape[0]
+        
+        boxes = torch.cat(boxes, dim=0)
+        image_inds = torch.cat(image_inds, dim=0)
 
-    boxes = torch.cat(boxes, dim=0)
-    image_inds = torch.cat(image_inds, dim=0)
+        scale_picks = torch.cat(scale_picks, dim=0)
 
-    scale_picks = torch.cat(scale_picks, dim=0)
-
-    # NMS within each scale + image
-    boxes, image_inds = boxes[scale_picks], image_inds[scale_picks]
+        # NMS within each scale + image
+        boxes, image_inds = boxes[scale_picks], image_inds[scale_picks]
 
 
-    # NMS within each image
-    pick = batched_nms(boxes[:, :4], boxes[:, 4], image_inds, 0.7)
-    boxes, image_inds = boxes[pick], image_inds[pick]
+        # NMS within each image
+        pick = batched_nms(boxes[:, :4], boxes[:, 4], image_inds, 0.7)
+        boxes, image_inds = boxes[pick], image_inds[pick]
 
-    regw = boxes[:, 2] - boxes[:, 0]
-    regh = boxes[:, 3] - boxes[:, 1]
-    qq1 = boxes[:, 0] + boxes[:, 5] * regw
-    qq2 = boxes[:, 1] + boxes[:, 6] * regh
-    qq3 = boxes[:, 2] + boxes[:, 7] * regw
-    qq4 = boxes[:, 3] + boxes[:, 8] * regh
-    boxes = torch.stack([qq1, qq2, qq3, qq4, boxes[:, 4]]).permute(1, 0)
-    boxes = rerec(boxes)
-    y, ey, x, ex = pad(boxes, w, h)
+        regw = boxes[:, 2] - boxes[:, 0]
+        regh = boxes[:, 3] - boxes[:, 1]
+        qq1 = boxes[:, 0] + boxes[:, 5] * regw
+        qq2 = boxes[:, 1] + boxes[:, 6] * regh
+        qq3 = boxes[:, 2] + boxes[:, 7] * regw
+        qq4 = boxes[:, 3] + boxes[:, 8] * regh
+        boxes = torch.stack([qq1, qq2, qq3, qq4, boxes[:, 4]]).permute(1, 0)
+        boxes = rerec(boxes)
+        y, ey, x, ex = pad(boxes, w, h)
     
     # Second stage
     if len(boxes) > 0:
